@@ -1,5 +1,7 @@
 package cn.shaikuba.mock.manage;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Maps;
 import io.restassured.RestAssured;
 import io.restassured.mapper.ObjectMapper;
@@ -12,43 +14,44 @@ import org.testng.annotations.Test;
 import java.util.List;
 import java.util.Map;
 
-public class ResponseDeserializationTest {
+public class ResponseBodyDeserializationTest {
 
     @Test
-    public void deserializationTest() {
+    public void deserializeTest() {
 
         RestAssured.baseURI = "http://localhost:8080/";
         RestAssured.basePath = "/mock/api";
 
-        Map pathParams = Maps.newHashMap();
-        pathParams.put("cartId", 1);
+        Map queryParams = Maps.newHashMap();
+        queryParams.put("cartId", 1);
 
         Response response = RestAssured.given()
                 .header("Content-Type", "application/json")
-                .params(pathParams)
+                .params(queryParams)
                 .get("/cart/goods");
 
-        response.prettyPrint();
+        //response.prettyPrint();
 
-        Cart cart = response.as(Cart.class);
-        response.as(Cart.class, new ObjectMapper() {
+        Cart cart = response.as(Cart.class, new ObjectMapper() {
             public Object deserialize(ObjectMapperDeserializationContext context) {
-                return null;
+                return JSONObject.parseObject(context.getDataToDeserialize().asString(), Cart.class);
+                //return JSON.parse(context.getDataToDeserialize().asString());
             }
 
             public Object serialize(ObjectMapperSerializationContext context) {
                 return null;
             }
         });
+        //Cart cart = response.as(Cart.class);
 
-        System.out.printf(cart.toString());
+        System.out.println(cart.toString());
+
     }
 
     @Data
     public static class Cart {
         private Integer cartId;
         private List<Goods> goodsList;
-
     }
 
     @Data
@@ -57,6 +60,6 @@ public class ResponseDeserializationTest {
         private Double price;
         private Integer amount;
         private String description;
-
     }
+
 }
